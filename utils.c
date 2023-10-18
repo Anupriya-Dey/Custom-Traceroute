@@ -4,12 +4,12 @@ void debug(int argc, char **argv)
 {
     if (argc == 1 || argc >= 3)
     {
-        printf("usage: ./main [-h] hostname\n");
+        printf("usage: ./main hostname\n");
         exit(1);
     }
     if (argv[1][0] == '-' && argv[1][2] == '\0')
     {
-        printf("usage: ./main [-h] hostname\n");
+        printf("usage: ./main hostname\n");
         exit(1);
     }
 }
