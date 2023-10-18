@@ -57,6 +57,6 @@ unsigned short checksum(char *buffer, int nwords)
         nwords--;
     }
     sum = (sum >> 16) + (sum & 0xffff);
-    sum += (sum >> 16);
+    sum = (sum >> 16) + (sum & 0xffff);
     return (~sum);
 }
