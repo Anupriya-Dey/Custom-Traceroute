@@ -29,8 +29,31 @@
 #include <netdb.h>
 #include <sys/time.h>
 
+typedef struct t_traceroute
+{
+	char *tempbuffer;
+	char recvbuff[4096];
+	socklen_t len;
+	struct sockaddr_in destAddr;
+	struct sockaddr_in hopAddr;
+	struct icmphdr *icmpheader;
+	char *sendbuff;
+	char *ip;
+	int hop;
+	int sockfd;
+	struct timeval timeout;
+	struct timeval sendtime;
+	struct timeval recvtime;
+	double rtt;
+	int count;
+} t_traceroute;
+
+void initialise_trace(t_traceroute *trace);
 void debug(int c, char **v);
-char* DNS_lookup(const char *domain_name); 
+char *DNS_lookup(char *domain_name, struct sockaddr_in *addr);
 unsigned short checksum(char *buffer, int nwords);
+int process_hop(t_traceroute *trace);
+void *create_packet(int hop, char *ip, char *buff);
+void display_hop_info(int type, t_traceroute *trace, int n);
 
 #endif
