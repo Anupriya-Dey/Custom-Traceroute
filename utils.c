@@ -123,20 +123,14 @@ int process_hop(t_traceroute *trace)
         {
             gettimeofday(&trace->recvtime, NULL);
 
-            trace->rtt = (double)((trace->recvtime.tv_usec - trace->sendtime.tv_usec) / 1000.0); // time taken start-end
+            trace->rtt = (double)((trace->recvtime.tv_sec - trace->sendtime.tv_sec) + (trace->recvtime.tv_usec - trace->sendtime.tv_usec) / 1000.0); // time taken start-end
             trace->icmpheader = (struct icmphdr *)(trace->recvbuff + sizeof(struct ip));
-
-            if ((trace->icmpheader->type != 0))
-                display_hop_info(1, trace, trace->count);
-            else
-            {
-                display_hop_info(1, trace, trace->count);
-                if (trace->count == 2)
-                    return (1);
-            }
+            
+            
+            //display info
         }
         else
-            display_hop_info(2, trace, trace->count);
+            //display info
 
         trace->count++;
     }
