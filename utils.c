@@ -23,7 +23,6 @@ void initialise_trace(t_traceroute *trace)
     trace->timeout.tv_sec = 1;
     trace->timeout.tv_usec = 0;
     trace->len = sizeof(struct sockaddr_in);
-    trace->tempbuffer = malloc(4096);
     trace->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
     if (setsockopt(trace->sockfd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
