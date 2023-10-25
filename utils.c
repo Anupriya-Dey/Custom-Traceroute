@@ -112,7 +112,7 @@ int process_hop(t_traceroute *trace)
 {
     while (trace->count < 3)
     {
-        trace->sendbuff = create_packet(trace->hop, trace->ip, trace->tempbuffer);
+        trace->sendbuff = create_packet(trace->hop, trace->ip);
         gettimeofday(&trace->sendtime, NULL);
 
         sendto(trace->sockfd, trace->sendbuff, sizeof(struct ip) + sizeof(struct icmphdr),
