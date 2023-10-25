@@ -75,11 +75,11 @@ unsigned short checksum(char *buffer, int nwords)
     return (~sum);
 }
 
-void *create_packet(int hopNo, char *ip, char *buff)
+void *create_packet(int hopNo, char *ip)
 {
     struct ip *ip_hdr;
     struct icmphdr *icmp_hdr;
-
+    char *buff = malloc(4096);
     ip_hdr = (struct ip *)buff;
     ip_hdr->ip_hl = 5;
     ip_hdr->ip_v = 4;
