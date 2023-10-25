@@ -31,7 +31,6 @@
 
 typedef struct t_traceroute
 {
-	char *tempbuffer;
 	char *recvbuff;
 	socklen_t len;
 	struct sockaddr_in destAddr;
@@ -53,7 +52,7 @@ void debug(int c, char **v);
 char *DNS_lookup(char *domain_name, struct sockaddr_in *addr);
 unsigned short checksum(char *buffer, int nwords);
 int process_hop(t_traceroute *trace);
-void *create_packet(int hop, char *ip, char *buff);
+void *create_packet(int hop, char *ip);
 void display_hop_info(int type, t_traceroute *trace, int n);
 
 #endif
