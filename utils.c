@@ -103,11 +103,6 @@ void *create_packet(int hopNo, char *ip)
     return (buff);
 }
 
-void display_hop_info(int type, t_traceroute *trace, int n)
-{
-    
-}
-
 int process_hop(t_traceroute *trace)
 {
     while (trace->count < 3)
