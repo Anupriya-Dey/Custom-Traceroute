@@ -32,7 +32,7 @@
 typedef struct t_traceroute
 {
 	char *tempbuffer;
-	char recvbuff[4096];
+	char *recvbuff;
 	socklen_t len;
 	struct sockaddr_in destAddr;
 	struct sockaddr_in hopAddr;
