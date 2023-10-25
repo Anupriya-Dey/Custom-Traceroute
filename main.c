@@ -10,9 +10,6 @@ int main(int argc, char **argv)
 
     if (trace.ip)
     {
-        printf("traceroute to %s (%s), 30 hops max,", argv[1], trace.ip);
-        printf(" %d byte packets\n", (int)(sizeof(struct ip) + sizeof(struct icmphdr)));
-
         while (!(trace.hop == 31))
         {
             trace.count = 0;
@@ -20,7 +17,6 @@ int main(int argc, char **argv)
                 break;
             trace.hop++;
         }
-        free(trace.tempbuffer);
     }
     return (0);
 }
