@@ -1,133 +1,92 @@
-#include "traceroute.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ttshivhu <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/10/10 13:31:52 by ttshivhu          #+#    #+#             */
+/*   Updated: 2018/10/10 17:12:58 by ttshivhu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-void debug(int argc, char **argv)
+#include <traceroute.h>
+
+void			debug(int c, char **v)
 {
-    if (argc == 1 || argc >= 3)
-    {
-        printf("usage: ./main hostname\n");
-        exit(1);
-    }
-    if (argv[1][0] == '-' && argv[1][2] == '\0')
-    {
-        printf("usage: ./main hostname\n");
-        exit(1);
-    }
+	if (c == 1 || c >= 3)
+		exit_err("usage: ./trace_network hostname\n");
+	if (v[1][0] == '-' && v[1][2] == '\0')
+		exit_err("usage: ./trace_network hostname\n");
 }
 
-void initialise_trace(t_traceroute *trace)
+void			exit_err(char *s)
 {
-    int one = 1;
-    int *val = &one;
-
-    trace->hop = 1;
-    trace->timeout.tv_sec = 1;
-    trace->timeout.tv_usec = 0;
-    trace->len = sizeof(struct sockaddr_in);
-    trace->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-
-    if (setsockopt(trace->sockfd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
-    {
-        printf("error setsockopt\n");
-        exit(1);
-    }
-
-    setsockopt(trace->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&trace->timeout, sizeof(trace->timeout));
+	printf("%s", s);
+	exit(1);
 }
 
-char *DNS_lookup(char *domain_name, struct sockaddr_in *addr)
+char			*dns_lookup(char *addr_host, struct sockaddr_in	*addr_con)
 {
-    struct addrinfo type; // it means we are looking for IPv4 address
-    struct addrinfo *res_addr;
-    struct sockaddr_in *sa_in;
-    char *ip;
+	struct addrinfo		hints;
+	struct addrinfo		*res;
+	struct sockaddr_in	*sa_in;
+	char				*ip;
 
-    memset(&(type), 0, sizeof(type));
-    type.ai_family = AF_INET;
-    ip = malloc(INET_ADDRSTRLEN); // value is 16
-    if (getaddrinfo(domain_name, NULL, &type, &(res_addr)) < 0)
-    {
-        printf("unknown host\n");
-        exit(1);
-    }
-
-    sa_in = (struct sockaddr_in *)res_addr->ai_addr;
-    inet_ntop(res_addr->ai_family, &(sa_in->sin_addr), ip, INET_ADDRSTRLEN);
-    (*addr) = *sa_in;
-    (*addr).sin_port = htons(1);
-    return (ip);
+	memset(&(hints), 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	ip = malloc(INET_ADDRSTRLEN);
+	if (getaddrinfo(addr_host, NULL, &hints, &(res)) < 0)
+		exit_err("unknown host\n");
+	sa_in = (struct sockaddr_in *)res->ai_addr;
+	inet_ntop(res->ai_family, &(sa_in->sin_addr), ip, INET_ADDRSTRLEN);
+	(*addr_con) = *sa_in;
+	(*addr_con).sin_port = htons(1);
+	return (ip);
 }
 
-unsigned short checksum(char *buffer, int nwords)
+unsigned short	checksum(char *buffer, int nwords)
 {
-    unsigned short *buf;
-    unsigned long sum;
+	unsigned short	*buf;
+	unsigned long	sum;
 
-    buf = (unsigned short *)buffer;
-    sum = 0;
-    while (nwords > 0)
-    {
-        sum += *buf++;
-        nwords--;
-    }
-    sum = (sum >> 16) + (sum & 0xffff);
-    sum = (sum >> 16) + (sum & 0xffff);
-    return (~sum);
+	buf = (unsigned short *)buffer;
+	sum = 0;
+	while (nwords > 0)
+	{
+		sum += *buf++;
+		nwords--;
+	}
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	return (~sum);
 }
 
-void *create_packet(int hopNo, char *ip)
+int				process_hop(t_traceroute *p)
 {
-    struct ip *ip_hdr;
-    struct icmphdr *icmp_hdr;
-    char *buff = malloc(4096);
-    ip_hdr = (struct ip *)buff;
-    ip_hdr->ip_hl = 5;
-    ip_hdr->ip_v = 4;
-    ip_hdr->ip_tos = 0;
-    ip_hdr->ip_len = sizeof(struct ip) + sizeof(struct icmphdr);
-    ip_hdr->ip_id = 10000;
-    ip_hdr->ip_off = 0;
-    ip_hdr->ip_ttl = hopNo;
-    ip_hdr->ip_p = IPPROTO_ICMP;
-
-    inet_pton(AF_INET, ip, &(ip_hdr->ip_dst));
-    ip_hdr->ip_sum = checksum(buff, 9);
-
-    icmp_hdr = (struct icmphdr *)(buff + sizeof(struct ip));
-    icmp_hdr->type = ICMP_ECHO;
-    icmp_hdr->code = 0;
-    icmp_hdr->checksum = 0;
-    icmp_hdr->un.echo.id = 0;
-    icmp_hdr->un.echo.sequence = hopNo + 1;
-    icmp_hdr->checksum = checksum((buff + 20), 4);
-
-    return (buff);
-}
-
-int process_hop(t_traceroute *trace)
-{
-    while (trace->count < 3)
-    {
-        trace->sendbuff = create_packet(trace->hop, trace->ip);
-        gettimeofday(&trace->sendtime, NULL);
-
-        sendto(trace->sockfd, trace->sendbuff, sizeof(struct ip) + sizeof(struct icmphdr),
-               0, (struct sockaddr *)&trace->destAddr, sizeof(trace->destAddr));
-
-        if (!(recvfrom(trace->sockfd, trace->recvbuff, sizeof(trace->recvbuff), 0,
-                       (struct sockaddr *)&trace->hopAddr, &trace->len) <= 0))
-        {
-            gettimeofday(&trace->recvtime, NULL);
-
-            trace->rtt = (double)((trace->recvtime.tv_sec - trace->sendtime.tv_sec) + (trace->recvtime.tv_usec - trace->sendtime.tv_usec) / 1000.0); // time taken start-end
-            trace->icmpheader = (struct icmphdr *)(trace->recvbuff + sizeof(struct ip));
-            
-            
-            //display info
-        }
-        else
-            //display info
-
-        trace->count++;
-    }
-    return (0);
+	while (++(p->i) < 3)
+	{
+		p->sendbuff = create_packet(p->hopNo, p->ip, p->buffer);
+		gettimeofday(&p->sendTime, NULL);
+		sendto(p->sockfd, p->sendbuff, sizeof(struct ip) + sizeof(struct icmphdr),
+				0, SA & p->destAddr, sizeof(p->destAddr));
+		if (!(recvfrom(p->sockfd, p->recvbuff, sizeof(p->recvbuff), 0,
+						SA & p->hopAddr, &p->len) <= 0))
+		{
+			gettimeofday(&p->recvTime, NULL);
+			p->RTT = (double)( (p->recvTime.tv_sec - p->sendTime.tv_sec)*1000 + (p->recvTime.tv_usec - p->sendTime.tv_usec) / 1000.0 );
+			p->icmph = (struct icmphdr *)(p->recvbuff + sizeof(struct ip));
+			if ((p->icmph->type != 0))
+				display_results(1, p, p->i);
+			else
+			{
+				display_results(1, p, p->i);
+				if (p->i == 2)
+					return (1);
+			}
+		}
+		else
+			display_results(2, p, p->i);
+	}
+	return (0);
 }

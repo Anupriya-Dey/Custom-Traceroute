@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   traceroute.h                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ttshivhu <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/10/10 13:28:53 by ttshivhu          #+#    #+#             */
+/*   Updated: 2018/10/10 17:13:01 by ttshivhu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef TRACEROUTE_H
 #define TRACEROUTE_H
 
@@ -29,30 +41,34 @@
 #include <netdb.h>
 #include <sys/time.h>
 
-typedef struct t_traceroute
+#define SA (struct sockaddr *)
+#define RECV_TIMEOUT 1
+
+typedef struct s_traceroute
 {
-	char *recvbuff;
-	char *sendbuff;
+	char *buffer;
+	char recvbuff[4096];
 	socklen_t len;
 	struct sockaddr_in destAddr;
 	struct sockaddr_in hopAddr;
-	struct icmphdr *icmpheader;
+	struct icmphdr *icmph;
+	char *sendbuff;
 	char *ip;
-	int hop;
+	int hopNo;
 	int sockfd;
-	struct timeval timeout;
-	struct timeval sendtime;
-	struct timeval recvtime;
-	double rtt;
-	int count;
+	struct timeval tv_out;
+	struct timeval sendTime;
+	struct timeval recvTime;
+	double RTT;
+	int i;
 } t_traceroute;
 
-void initialise_trace(t_traceroute *trace);
-void debug(int c, char **v);
-char *DNS_lookup(char *domain_name, struct sockaddr_in *addr);
+char *dns_lookup(char *addr_host, struct sockaddr_in *addr_con);
 unsigned short checksum(char *buffer, int nwords);
-int process_hop(t_traceroute *trace);
-void *create_packet(int hop, char *ip);
-void display_hop_info(int type, t_traceroute *trace, int n);
+void exit_err(char *s);
+void debug(int c, char **v);
+int process_hop(t_traceroute *p);
+void display_results(int type, t_traceroute *p, int n);
+void *create_packet(int hopNo, char *ip, char *buff);
 
 #endif
