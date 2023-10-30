@@ -61,5 +61,8 @@ void debug(int argc, char **argv);
 int process_hop(t_traceroute *p);
 void *create_packet(int hopNo, char *ip, char *buff);
 void display_results(int type, t_traceroute *p, int count);
+void find_geolocation(char* ip_address);
+void nmap(char* targetIP);
+
 
 #endif

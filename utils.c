@@ -35,6 +35,15 @@ char *dns_lookup(char *domain_name, struct sockaddr_in *connecAddr)
 	return (ip);
 }
 
+void nmap(char* targetIP) {
+    char nmapCommand[100];
+    sprintf(nmapCommand, "nmap %s", targetIP);
+ 
+    // Execute the Nmap command
+    system(nmapCommand);
+ 
+    return 0;
+}
 unsigned short checksum(char *buffer, int nwords)
 {
 	unsigned short *buf;
