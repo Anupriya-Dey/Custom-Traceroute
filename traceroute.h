@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   traceroute.h                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ttshivhu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/10/10 13:28:53 by ttshivhu          #+#    #+#             */
-/*   Updated: 2018/10/10 17:13:01 by ttshivhu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef TRACEROUTE_H
 #define TRACEROUTE_H
 
@@ -60,15 +48,18 @@ typedef struct s_traceroute
 	struct timeval sendTime;
 	struct timeval recvTime;
 	double RTT;
+	double bandwidth;
 	int i;
 } t_traceroute;
 
-char *dns_lookup(char *addr_host, struct sockaddr_in *addr_con);
+char *dns_lookup(char *domain_name, struct sockaddr_in *connecAddr);
 unsigned short checksum(char *buffer, int nwords);
+
 void exit_err(char *s);
-void debug(int c, char **v);
+void debug(int argc, char **argv);
+
 int process_hop(t_traceroute *p);
-void display_results(int type, t_traceroute *p, int n);
 void *create_packet(int hopNo, char *ip, char *buff);
+void display_results(int type, t_traceroute *p, int count);
 
 #endif

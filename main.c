@@ -1,21 +1,9 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ttshivhu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/10/10 13:32:14 by ttshivhu          #+#    #+#             */
-/*   Updated: 2018/10/11 08:38:55 by ttshivhu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include <traceroute.h>
 
-void	*create_packet(int hopNo, char *ip, char *buff)
+void *create_packet(int hopNo, char *ip, char *buff)
 {
-	struct ip		*ip_hdr;
-	struct icmphdr	*icmphd;
+	struct ip *ip_hdr;
+	struct icmphdr *icmphd;
 
 	ip_hdr = (struct ip *)buff;
 	ip_hdr->ip_hl = 5;
@@ -28,6 +16,7 @@ void	*create_packet(int hopNo, char *ip, char *buff)
 	ip_hdr->ip_p = IPPROTO_ICMP;
 	inet_pton(AF_INET, ip, &(ip_hdr->ip_dst));
 	ip_hdr->ip_sum = checksum(buff, 9);
+
 	icmphd = (struct icmphdr *)(buff + sizeof(struct ip));
 	icmphd->type = ICMP_ECHO;
 	icmphd->code = 0;
@@ -35,13 +24,14 @@ void	*create_packet(int hopNo, char *ip, char *buff)
 	icmphd->un.echo.id = 0;
 	icmphd->un.echo.sequence = hopNo + 1;
 	icmphd->checksum = checksum((buff + 20), 4);
+
 	return (buff);
 }
 
-void	 initialise_trace(t_traceroute *trace)
+void initialise_trace(t_traceroute *trace)
 {
-	int	one;
-	int	*val;
+	int one;
+	int *val;
 
 	one = 1;
 	val = &one;
@@ -51,63 +41,62 @@ void	 initialise_trace(t_traceroute *trace)
 	trace->len = sizeof(struct sockaddr_in);
 	trace->buffer = malloc(4096);
 	trace->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
 	if (setsockopt(trace->sockfd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
 		exit_err("error setsockopt\n");
+
 	setsockopt(trace->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&trace->tv_out, sizeof(trace->tv_out));
 }
 
-void	display_results(int type, t_traceroute *p, int n)
+void display_results(int type, t_traceroute *p, int count)
 {
-	struct ip		*ip;
-	struct hostent	*c;
-	char			*ipa;
+	struct ip *ip;
+	struct hostent *address;
+	char *ipa;
 
 	ipa = inet_ntoa(p->hopAddr.sin_addr);
 	ip = (struct ip *)p->recvbuff;
-	c = gethostbyaddr((void*)&(ip->ip_src.s_addr),sizeof(ip->ip_src.s_addr), AF_INET);
+	address = gethostbyaddr((void *)&(ip->ip_src.s_addr), sizeof(ip->ip_src.s_addr), AF_INET);
+
 	if (type == 1)
 	{
-		if (n == 0)
-		{
-			printf("%2d  %s (%s) %.3f ms ", p->hopNo, c ? c->h_name : ipa,
-				ipa, p->RTT);
+		if(count==0)
+			printf("%2d  %s (%s) %.3f ms ", p->hopNo, address ? address->h_name : ipa, ipa, p->RTT);
+		else{
+			printf("%.3f ms ", p->RTT);
+			if(count==2) printf("Estimated Bandwidth: %.2f bytes/ms\n", p->bandwidth);
+			else printf(" ");
 		}
-		else
-			printf("%.3f ms%c", p->RTT, (n == 2) ? '\n' : ' ');
 	}
 	else
 	{
-		if (n == 0)
-			printf("%2d  * ", p->hopNo);
-		else
-			printf("*%c", (n == 2) ? '\n' : ' ');
+		if(count==0) printf("%2d  * ", p->hopNo);
+		else printf("*%c", (count==2) ? '\n' : ' ');
 	}
 }
 
 void trace_network(t_traceroute *p)
 {
-	while (42 && (!(p->hopNo == 31)))
-	{
+	while (!(p->hopNo == 31)){
 		p->i = -1;
-		if (process_hop(p))
-			break ;
+		if(process_hop(p)) break;
 		p->hopNo++;
 	}
 }
 
-int		main(int c, char **v)
+int main(int argc, char **argv)
 {
 	t_traceroute trace;
 
-	(void)c;
+	(void) argc;
 	initialise_trace(&trace);
-	debug(c, v);
-	trace.ip = dns_lookup(v[1], &trace.destAddr);
+	debug(argc, argv);
+	trace.ip = dns_lookup(argv[1], &trace.destAddr);
+
 	if (trace.ip)
 	{
-		printf("traceroute to %s (%s), 30 hops max,", v[1], trace.ip);
-		printf(" %d byte packets\n", (int)(sizeof(struct ip) +
-				sizeof(struct icmphdr)));
+		printf("traceroute to %s (%s), 30 hops max,", argv[1], trace.ip);
+		printf(" %d byte packets\n", (int)(sizeof(struct ip) + sizeof(struct icmphdr)));
 		trace_network(&trace);
 		free(trace.buffer);
 	}
