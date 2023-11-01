@@ -58,8 +58,7 @@ void display_results(int type, t_traceroute *p, int count)
 	ip = (struct ip *)p->recvbuff;
 	address = gethostbyaddr((void *)&(ip->ip_src.s_addr), sizeof(ip->ip_src.s_addr), AF_INET);
 
-
-	if (type == 1)
+	if (type != 2)
 	{
 
 		if(count==0)
@@ -68,6 +67,7 @@ void display_results(int type, t_traceroute *p, int count)
 			printf("RTT: %.3f ms \n", p->RTT);
 			if(count==2) find_geolocation(ipa);
 			if(count==2) printf("Estimated Bandwidth: %.2f bytes/ms\n\n", p->bandwidth);
+			if(count==2 && type==3) nmap(ipa);
 			// else printf(" ");
 		}
 	}
@@ -76,14 +76,16 @@ void display_results(int type, t_traceroute *p, int count)
 		if(count==0) printf("%d.)  * ", p->hopNo);
 		else printf("*%s", (count==2) ? "\n\n" : " ");
 	}
+
 }
 
 void trace_network(t_traceroute *p)
 {
 	while (!(p->hopNo == 31)){
-		p->i = -1;
+		p->i = 0;
 		if(process_hop(p)) break;
 		p->hopNo++;
+		
 	}
 }
 

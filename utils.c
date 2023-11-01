@@ -39,10 +39,8 @@ void nmap(char* targetIP) {
     char nmapCommand[100];
     sprintf(nmapCommand, "nmap %s", targetIP);
  
-    // Execute the Nmap command
     system(nmapCommand);
  
-    return 0;
 }
 unsigned short checksum(char *buffer, int nwords)
 {
@@ -63,7 +61,7 @@ unsigned short checksum(char *buffer, int nwords)
 
 int process_hop(t_traceroute *p)
 {
-	while (++(p->i) < 3)
+	while (p->i < 3)
 	{
 		p->sendbuff = create_packet(p->hopNo, p->ip, p->buffer);
 		gettimeofday(&p->sendTime, NULL);
@@ -80,14 +78,20 @@ int process_hop(t_traceroute *p)
 
 			p->icmph = (struct icmphdr *)(p->recvbuff + sizeof(struct ip));
 			if ((p->icmph->type != 0))
+			{
+				// printf("%d",p->icmph->type);
 				display_results(1, p, p->i);
+			}
 			else{
-				display_results(1, p, p->i);
+				display_results(3, p, p->i);
 				if (p->i == 2)
+				{
 					return (1);
+				}
 			}
 		}
 		else display_results(2, p, p->i);
+		p->i++;
 	}
 	return (0);
 }
