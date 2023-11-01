@@ -1,6 +1,3 @@
-#ifndef TRACEROUTE_H
-#define TRACEROUTE_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <fcntl.h>
@@ -28,9 +26,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <sys/time.h>
-
-#define SA (struct sockaddr *)
-#define RECV_TIMEOUT 1
 
 typedef struct s_traceroute
 {
@@ -50,19 +45,16 @@ typedef struct s_traceroute
 	double RTT;
 	double bandwidth;
 	int i;
+	int fail;
 } t_traceroute;
 
 char *dns_lookup(char *domain_name, struct sockaddr_in *connecAddr);
 unsigned short checksum(char *buffer, int nwords);
-
 void exit_err(char *s);
 void debug(int argc, char **argv);
-
 int process_hop(t_traceroute *p);
 void *create_packet(int hopNo, char *ip, char *buff);
 void display_results(int type, t_traceroute *p, int count);
 void find_geolocation(char* ip_address);
-void nmap(char* targetIP);
+void nmap_port_discovery(char* targetIP);
 
-
-#endif

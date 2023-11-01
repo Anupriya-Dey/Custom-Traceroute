@@ -17,7 +17,7 @@ void find_geolocation(char* ip_address) {
     curl = curl_easy_init();
 
     if (curl) {
-        // Construct the URL for ipinfo.io
+        // Construct the URL 
         char url[100];
         snprintf(url, sizeof(url), "https://ipinfo.io/%s", ip_address);
 
@@ -34,22 +34,14 @@ void find_geolocation(char* ip_address) {
 
         if (res != CURLE_OK) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-        } else {
-            // Read and print the response
-            fseek(response_file, 0, SEEK_SET);
-            char buffer[128];
-            while (fgets(buffer, sizeof(buffer), response_file) != NULL) {
-                printf("%s", buffer);
-            }
-        }
-
+        } 
+        
         fclose(response_file);
         curl_easy_cleanup(curl);
 
         FILE *jsonFile = fopen("geolocation.json", "r");
         if (!jsonFile) {
             fprintf(stderr, "Failed to open JSON file.\n");
-            // exit(1);
         }
 
         json_t *root = json_loadf(jsonFile, 0, NULL);
@@ -67,7 +59,6 @@ void find_geolocation(char* ip_address) {
  
         if (json_is_string(city) && json_is_string(region) && json_is_string(country) && json_is_string(org)) {
             printf("Location: \n");
-
             const char *data1 = json_string_value(city);
             printf("  city: %s\n", data1);
             const char *data2 = json_string_value(region);

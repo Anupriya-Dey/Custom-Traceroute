@@ -1,12 +1,12 @@
 {
-  "ip": "157.240.16.35",
-  "hostname": "edge-star-mini-shv-01-bom1.facebook.com",
-  "city": "Mumbai",
-  "region": "Maharashtra",
+  "ip": "157.240.239.35",
+  "hostname": "edge-star-mini-shv-02-del1.facebook.com",
+  "city": "Noida",
+  "region": "Uttar Pradesh",
   "country": "IN",
-  "loc": "19.0728,72.8826",
+  "loc": "28.5800,77.3300",
   "org": "AS32934 Facebook, Inc.",
-  "postal": "400070",
+  "postal": "201005",
   "timezone": "Asia/Kolkata",
   "readme": "https://ipinfo.io/missingauth"
 }

@@ -36,7 +36,7 @@ void initialise_trace(t_traceroute *trace)
 	one = 1;
 	val = &one;
 	trace->hopNo = 1;
-	trace->tv_out.tv_sec = RECV_TIMEOUT;
+	trace->tv_out.tv_sec = 1;
 	trace->tv_out.tv_usec = 0;
 	trace->len = sizeof(struct sockaddr_in);
 	trace->buffer = malloc(4096);
@@ -45,7 +45,8 @@ void initialise_trace(t_traceroute *trace)
 	if (setsockopt(trace->sockfd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
 		exit_err("error setsockopt\n");
 
-	setsockopt(trace->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&trace->tv_out, sizeof(trace->tv_out));
+	if (setsockopt(trace->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&trace->tv_out, sizeof(trace->tv_out)) < 0)
+		exit_err("error setsockopt\n");
 }
 
 void display_results(int type, t_traceroute *p, int count)
@@ -53,39 +54,47 @@ void display_results(int type, t_traceroute *p, int count)
 	struct ip *ip;
 	struct hostent *address;
 	char *ipa;
-
 	ipa = inet_ntoa(p->hopAddr.sin_addr);
 	ip = (struct ip *)p->recvbuff;
 	address = gethostbyaddr((void *)&(ip->ip_src.s_addr), sizeof(ip->ip_src.s_addr), AF_INET);
 
 	if (type != 2)
 	{
-
-		if(count==0)
-			printf("%d.) IP Address: %s (%s) \nRTT: %.3f ms\n", p->hopNo, address ? address->h_name : ipa, ipa, p->RTT);
-		else{
-			printf("RTT: %.3f ms \n", p->RTT);
-			if(count==2) find_geolocation(ipa);
-			if(count==2) printf("Estimated Bandwidth: %.2f bytes/ms\n\n", p->bandwidth);
-			if(count==2 && type==3) nmap(ipa);
-			// else printf(" ");
+		if (count == 0)
+		{
+			printf("%d.) ", p->hopNo);
 		}
+
+		if (p->fail == count)
+		{
+			printf("IP Address: %s (%s) \n", address ? address->h_name : ipa, ipa);
+		}
+
+		printf("RTT: %.3f ms \n", p->RTT);
+		if (count == 2) find_geolocation(ipa);
+		if (count == 2)	printf("Estimated Bandwidth: %.2f bytes/ms\n\n", p->bandwidth);
+		if (count == 2 && type == 3) nmap_port_discovery(ipa);
+
 	}
 	else
 	{
-		if(count==0) printf("%d.)  * ", p->hopNo);
-		else printf("*%s", (count==2) ? "\n\n" : " ");
+		p->fail++;
+		if (count == 0)
+			printf("%d.)  * ", p->hopNo);
+		else
+			printf("*%s", (count == 2) ? "\n\n" : " ");
 	}
-
 }
 
 void trace_network(t_traceroute *p)
 {
-	while (!(p->hopNo == 31)){
+	while (!(p->hopNo == 31))
+	{
 		p->i = 0;
-		if(process_hop(p)) break;
+		p->fail = 0;
+		if (process_hop(p))
+			break;
 		p->hopNo++;
-		
 	}
 }
 
@@ -93,7 +102,6 @@ int main(int argc, char **argv)
 {
 	t_traceroute trace;
 
-	(void) argc;
 	initialise_trace(&trace);
 	debug(argc, argv);
 	trace.ip = dns_lookup(argv[1], &trace.destAddr);
